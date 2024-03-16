@@ -1,16 +1,7 @@
 #include <iostream>
 #include <string>
-#include <stdexcept> 
-#include <unordered_set> 
+#include <vector>
 using namespace std;
-
-class Course;
-class ComputerScienceCourse;
-class HistoryCourse;
-class MathematicsCourse;
-class Teacher;
-
-void display_course_details(Course* course);
 
 class Course {
 protected:
@@ -22,17 +13,11 @@ public:
     Course(string code, string name, string industry)
         : course_code(code), course_name(name), industry_name(industry) {}
 
-    virtual ~Course() {}
-
     string getCourseCode() const { return course_code; }
     string getCourseName() const { return course_name; }
     string getIndustryName() const { return industry_name; }
 
-    virtual void displayCourseDetails() const {
-        cout << "Course Code: " << course_code << endl;
-        cout << "Course Name: " << course_name << endl;
-        cout << "Industry Name: " << industry_name << endl;
-    }
+    virtual void displayCourseDetails() const = 0;
 };
 
 class ComputerScienceCourse : public Course {
@@ -43,105 +28,95 @@ private:
 public:
     ComputerScienceCourse(string code, string name, string industry,
                           int credits, string dept)
-        : Course(code, name, industry) {
-        if (credits < 0)
-            throw invalid_argument("Credit hours cannot be negative.");
-        creditHours = credits;
-        department = dept;
-    }
+        : Course(code, name, industry), creditHours(credits), department(dept) {}
 
     void displayCourseDetails() const override {
-        Course::displayCourseDetails();
+        cout << "Course Code: " << getCourseCode() << endl;
+        cout << "Course Name: " << getCourseName() << endl;
         cout << "Credit Hours: " << creditHours << endl;
         cout << "Department: " << department << endl;
     }
-
-    string getDepartment() const { return department; }
 };
 
-
-class HistoryCourse : public Course {
-private:
-    int year;
-    string region;
-
-public:
-    HistoryCourse(string code, string name, string industry,
-                  int yr, string reg)
-        : Course(code, name, industry) {
-        if (yr < 0)
-            throw invalid_argument("Year cannot be negative.");
-        year = yr;
-        region = reg;
-    }
-
-    void displayCourseDetails() const override {
-        Course::displayCourseDetails();
-        cout << "Year: " << year << endl;
-        cout << "Region: " << region << endl;
-    }
-};
-
-class MathematicsCourse : public Course {
-private:
-    int creditHours;
+class Student {
+protected:
+    string student_name;
+    int student_id;
+    vector<Course*> enrolled_courses;
 
 public:
-    MathematicsCourse(string code, string name, string industry, int credits)
-        : Course(code, name, industry) {
-        if (credits < 0)
-            throw invalid_argument("Credit hours cannot be negative.");
-        creditHours = credits;
+    Student(string studentName, int studentID)
+        : student_name(studentName), student_id(studentID) {}
+
+    string getStudentName() const { return student_name; }
+    int getStudentID() const { return student_id; }
+
+    void enrollCourse(Course* course) {
+        enrolled_courses.push_back(course);
     }
 
-    void displayCourseDetails() const override {
-        Course::displayCourseDetails();
-        cout << "Credit Hours: " << creditHours << endl;
+    void displayEnrolledCourses() const {
+        cout << "Student Name: " << student_name << endl;
+        cout << "Student ID: " << student_id << endl;
+        cout << "Enrolled Courses: " << endl;
+        for (const auto& course : enrolled_courses) {
+            course->displayCourseDetails();
+            cout << endl;
+        }
     }
 };
 
 class Teacher {
-private:
-    string instructor_name;
-    string department;
+protected:
+    string teacher_name;
+    int teacher_id;
+    vector<Course*> taught_courses;
 
 public:
-    Teacher(string name, string dept)
-        : instructor_name(name), department(dept) {}
+    Teacher(string teacherName, int teacherID)
+        : teacher_name(teacherName), teacher_id(teacherID) {}
 
-    string getInstructorName() const { return instructor_name; }
-    string getDepartment() const { return department; }
+    string getTeacherName() const { return teacher_name; }
+    int getTeacherID() const { return teacher_id; }
+
+    void teachCourse(Course* course) {
+        taught_courses.push_back(course);
+    }
+
+    void displayTaughtCourses() const {
+        cout << "Teacher Name: " << teacher_name << endl;
+        cout << "Teacher ID: " << teacher_id << endl;
+        cout << "Courses Taught: " << endl;
+        for (const auto& course : taught_courses) {
+            course->displayCourseDetails();
+            cout << endl;
+        }
+    }
+
+    void addCourseDetails() {
+        string code, name, industry;
+        cout << "Enter Course Code: ";
+        cin >> code;
+        cout << "Enter Course Name: ";
+        cin >> name;
+        cout << "Enter Industry Name: ";
+        cin >> industry;
+
+        string department;
+        cout << "Enter Department: ";
+        cin >> department;
+
+        Course* newCourse = new ComputerScienceCourse(code, name, industry, 0, department);
+        taught_courses.push_back(newCourse);
+    }
 };
 
-void display_course_details(Course* course) {
-    course->displayCourseDetails();
-
-    if (ComputerScienceCourse* cs_course = dynamic_cast<ComputerScienceCourse*>(course)) {
-        cout << "Instructor Name: "; 
-        cout << "Department: " << cs_course->getDepartment() << endl;
-    }
-    else if (HistoryCourse* hist_course = dynamic_cast<HistoryCourse*>(course)) {
-        cout << "Instructor Name: "; 
-        cout << "Department: ";
-        cout << endl;
-    }
-}
-
 int main() {
-    try {
-        ComputerScienceCourse csCourse("CS", "Computer Science", "Technology Stream", 3, "Computer Science");
-        HistoryCourse histCourse("HISTORY", "History of India", "Humanities Stream", 2, "Europe");
-        MathematicsCourse mathCourse("MATHs", "Trigonometry", "Science Stream", 4);
+    Teacher teacher1("Arti", 1);
 
-        display_course_details(&csCourse);
-        cout << endl;
-        display_course_details(&histCourse);
-        cout << endl;
-        display_course_details(&mathCourse);
-    }
-    catch (const invalid_argument& e) {
-        cerr << "Invalid argument: " << e.what() << endl;
-    }
+    teacher1.addCourseDetails();
+
+    teacher1.displayTaughtCourses();
 
     return 0;
 }
