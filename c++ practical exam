@@ -1,0 +1,147 @@
+#include <iostream>
+#include <string>
+#include <stdexcept> 
+#include <unordered_set> 
+using namespace std;
+
+class Course;
+class ComputerScienceCourse;
+class HistoryCourse;
+class MathematicsCourse;
+class Teacher;
+
+void display_course_details(Course* course);
+
+class Course {
+protected:
+    string course_code;
+    string course_name;
+    string industry_name;
+
+public:
+    Course(string code, string name, string industry)
+        : course_code(code), course_name(name), industry_name(industry) {}
+
+    virtual ~Course() {}
+
+    string getCourseCode() const { return course_code; }
+    string getCourseName() const { return course_name; }
+    string getIndustryName() const { return industry_name; }
+
+    virtual void displayCourseDetails() const {
+        cout << "Course Code: " << course_code << endl;
+        cout << "Course Name: " << course_name << endl;
+        cout << "Industry Name: " << industry_name << endl;
+    }
+};
+
+class ComputerScienceCourse : public Course {
+private:
+    int creditHours;
+    string department;
+
+public:
+    ComputerScienceCourse(string code, string name, string industry,
+                          int credits, string dept)
+        : Course(code, name, industry) {
+        if (credits < 0)
+            throw invalid_argument("Credit hours cannot be negative.");
+        creditHours = credits;
+        department = dept;
+    }
+
+    void displayCourseDetails() const override {
+        Course::displayCourseDetails();
+        cout << "Credit Hours: " << creditHours << endl;
+        cout << "Department: " << department << endl;
+    }
+
+    string getDepartment() const { return department; }
+};
+
+
+class HistoryCourse : public Course {
+private:
+    int year;
+    string region;
+
+public:
+    HistoryCourse(string code, string name, string industry,
+                  int yr, string reg)
+        : Course(code, name, industry) {
+        if (yr < 0)
+            throw invalid_argument("Year cannot be negative.");
+        year = yr;
+        region = reg;
+    }
+
+    void displayCourseDetails() const override {
+        Course::displayCourseDetails();
+        cout << "Year: " << year << endl;
+        cout << "Region: " << region << endl;
+    }
+};
+
+class MathematicsCourse : public Course {
+private:
+    int creditHours;
+
+public:
+    MathematicsCourse(string code, string name, string industry, int credits)
+        : Course(code, name, industry) {
+        if (credits < 0)
+            throw invalid_argument("Credit hours cannot be negative.");
+        creditHours = credits;
+    }
+
+    void displayCourseDetails() const override {
+        Course::displayCourseDetails();
+        cout << "Credit Hours: " << creditHours << endl;
+    }
+};
+
+class Teacher {
+private:
+    string instructor_name;
+    string department;
+
+public:
+    Teacher(string name, string dept)
+        : instructor_name(name), department(dept) {}
+
+    string getInstructorName() const { return instructor_name; }
+    string getDepartment() const { return department; }
+};
+
+void display_course_details(Course* course) {
+    course->displayCourseDetails();
+
+    if (ComputerScienceCourse* cs_course = dynamic_cast<ComputerScienceCourse*>(course)) {
+        cout << "Instructor Name: "; 
+        cout << "Department: " << cs_course->getDepartment() << endl;
+    }
+    else if (HistoryCourse* hist_course = dynamic_cast<HistoryCourse*>(course)) {
+        cout << "Instructor Name: "; 
+        cout << "Department: ";
+        cout << endl;
+    }
+}
+
+int main() {
+    try {
+        ComputerScienceCourse csCourse("CS", "Computer Science", "Technology Stream", 3, "Computer Science");
+        HistoryCourse histCourse("HISTORY", "History of India", "Humanities Stream", 2, "Europe");
+        MathematicsCourse mathCourse("MATHs", "Trigonometry", "Science Stream", 4);
+
+        display_course_details(&csCourse);
+        cout << endl;
+        display_course_details(&histCourse);
+        cout << endl;
+        display_course_details(&mathCourse);
+    }
+    catch (const invalid_argument& e) {
+        cerr << "Invalid argument: " << e.what() << endl;
+    }
+
+    return 0;
+}
