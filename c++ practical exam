@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <stdexcept> // for exception handling
+#include <limits>    // for numeric_limits
 using namespace std;
 
 class Course {
@@ -35,6 +37,40 @@ public:
         cout << "Course Name: " << getCourseName() << endl;
         cout << "Credit Hours: " << creditHours << endl;
         cout << "Department: " << department << endl;
+    }
+};
+
+class HistoryCourse : public Course {
+private:
+    int year;
+    string region;
+
+public:
+    HistoryCourse(string code, string name, string industry,
+                  int yr, string reg)
+        : Course(code, name, industry), year(yr), region(reg) {}
+
+    void displayCourseDetails() const override {
+        cout << "Course Code: " << getCourseCode() << endl;
+        cout << "Course Name: " << getCourseName() << endl;
+        cout << "Year: " << year << endl;
+        cout << "Region: " << region << endl;
+    }
+};
+
+class MathematicsCourse : public Course {
+private:
+    int creditHours;
+
+public:
+    MathematicsCourse(string code, string name, string industry,
+                      int credits)
+        : Course(code, name, industry), creditHours(credits) {}
+
+    void displayCourseDetails() const override {
+        cout << "Course Code: " << getCourseCode() << endl;
+        cout << "Course Name: " << getCourseName() << endl;
+        cout << "Credit Hours: " << creditHours << endl;
     }
 };
 
@@ -73,50 +109,86 @@ protected:
     vector<Course*> taught_courses;
 
 public:
-    Teacher(string teacherName, int teacherID)
-        : teacher_name(teacherName), teacher_id(teacherID) {}
+    Teacher(string name, int id) : teacher_name(name), teacher_id(id) {}
 
     string getTeacherName() const { return teacher_name; }
-    int getTeacherID() const { return teacher_id; }
 
-    void teachCourse(Course* course) {
-        taught_courses.push_back(course);
+    void addCourse(string code, string name, string industry, int credits, string dept) {
+        try {
+          
+            for (const auto& course : taught_courses) {
+                if (course->getCourseCode() == code) {
+                    throw invalid_argument("Course with the same code already exists.");
+                }
+            }
+       
+            if (credits < 0) {
+                throw invalid_argument("Credit hours cannot be negative.");
+            }
+            // If no issues, add the course
+            Course* newCourse = new ComputerScienceCourse(code, name, industry, credits, dept);
+            taught_courses.push_back(newCourse);
+        } catch (const invalid_argument& e) {
+            cerr << "Error: " << e.what() << endl;
+        }
     }
 
     void displayTaughtCourses() const {
-        cout << "Teacher Name: " << teacher_name << endl;
-        cout << "Teacher ID: " << teacher_id << endl;
+        cout << "Teacher: " << teacher_name << " (ID: " << teacher_id << ")" << endl;
         cout << "Courses Taught: " << endl;
         for (const auto& course : taught_courses) {
             course->displayCourseDetails();
             cout << endl;
         }
     }
+};
 
-    void addCourseDetails() {
-        string code, name, industry;
-        cout << "Enter Course Code: ";
+int main() {
+    const int numInstructors = 2;
+    vector<Teacher> teachers;
+
+
+    for (int i = 0; i < numInstructors; ++i) {
+        string name;
+        int id;
+        cout << "Enter Instructor " << i + 1 << " Name: ";
+        cin >> name;
+        cout << "Enter Instructor " << i + 1 << " ID: ";
+        cin >> id;
+        teachers.emplace_back(name, id);
+    }
+
+
+    for (size_t i = 0; i < teachers.size(); ++i) {
+        string code, name, industry, dept;
+        int credits;
+        cout << "Enter Course Code for " << teachers[i].getTeacherName() << ": ";
         cin >> code;
         cout << "Enter Course Name: ";
         cin >> name;
         cout << "Enter Industry Name: ";
         cin >> industry;
-
-        string department;
         cout << "Enter Department: ";
-        cin >> department;
-
-        Course* newCourse = new ComputerScienceCourse(code, name, industry, 0, department);
-        taught_courses.push_back(newCourse);
+        cin >> dept;
+        cout << "Enter Credit Hours: ";
+        try {
+            cin >> credits;
+            if (cin.fail()) {
+                throw invalid_argument("Invalid input for credit hours.");
+            }
+            teachers[i].addCourse(code, name, industry, credits, dept);
+        } catch (const invalid_argument& e) {
+            cerr << "Error: " << e.what() << endl;
+          cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
     }
-};
 
-int main() {
-    Teacher teacher1("Arti", 1);
-
-    teacher1.addCourseDetails();
-
-    teacher1.displayTaughtCourses();
+    for (size_t i = 0; i < teachers.size(); ++i) {
+        teachers[i].displayTaughtCourses();
+        cout << endl;
+    }
 
     return 0;
 }
+
